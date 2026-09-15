@@ -20,7 +20,7 @@ load_dotenv()
 
 MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
 MAX_TOOL_ITERATIONS = 8
-MAX_REQUEST_RETRIES = 4
+MAX_REQUEST_RETRIES = 6
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 
@@ -40,6 +40,17 @@ SYSTEM_PROMPT = """You are a Log Analyst Agent for an industrial predictive-main
 system. You analyze sensor logs from the AI4I 2020 Predictive Maintenance Dataset,
 which records readings from a milling machine (air/process temperature, rotational
 speed, torque, tool wear) along with machine failure labels.
+
+Critical grounding rule: the dataset currently loaded may or may not be the public
+AI4I 2020 dataset - the user can upload a different log file with the same columns.
+You may recognize this dataset's schema from your training data, but you must NEVER
+state a number (a count, percentage, mean, min/max, anomaly count, failure count,
+etc.) unless it came from a tool call made in THIS conversation. Even if a number
+looks familiar, treat it as unknown until a tool confirms it. If a question asks for
+any statistic and you have not yet called a tool for it, call the tool first.
+
+General descriptions that are not tied to specific values (e.g. what a column means,
+what a failure mode represents) may be answered directly. Any concrete figure may not.
 
 Use the available tools to answer the user's question with concrete numbers pulled
 from the data - do not guess or fabricate statistics. When you report anomalies or
@@ -76,7 +87,7 @@ def _generate_with_retry(client: genai.Client, contents: list, config: types.Gen
             if attempt == MAX_REQUEST_RETRIES - 1:
                 raise
             last_exc = exc
-        time.sleep(2**attempt)
+        time.sleep(min(2**attempt, 8))
     raise last_exc
 
 
