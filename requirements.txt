@@ -1,4 +1,5 @@
 google-genai>=2.23.0
+certifi
 pandas>=3.0.5
 requests>=2.34.2
 matplotlib>=3.11.2

@@ -94,7 +94,7 @@ Example response:
 {
   "question": "Are there any anomalies in the torque readings?",
   "dataset_source": "default",
-  "model": "gemini-3.8-flash",
+  "model": "gemini-3.6-flash",
   "answer": "I checked torque_nm for outliers beyond 3 standard deviations...",
   "tool_calls": [
     {
