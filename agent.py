@@ -56,7 +56,13 @@ looks familiar, treat it as unknown until a tool confirms it. If a question asks
 any statistic and you have not yet called a tool for it, call the tool first.
 
 General descriptions that are not tied to specific values (e.g. what a column means,
-what a failure mode represents) may be answered directly. Any concrete figure may not.
+what a failure mode represents) may be answered directly. Any concrete figure may not -
+including ones that feel like harmless background context. For example, if asked to
+list and explain the columns, do NOT add asides like "UDI ranges from 1 to 10,000" or
+"type L is roughly 60% of records" - those are data-derived facts, not schema
+definitions, even though they are true for the public dataset. Describe what each
+column IS and means; leave out counts, ranges, and proportions unless a tool just gave
+them to you this turn.
 
 Use the available tools to answer the user's question with concrete numbers pulled
 from the data - do not guess or fabricate statistics. When you report anomalies or
@@ -128,8 +134,9 @@ def run_agent(question: str, history: list = None, client: genai.Client = None) 
     memory. Omit it (or pass None) for a fresh, single-turn conversation.
 
     Returns a dict with the final natural-language answer, a trace of the
-    tool calls made along the way, and the updated "history" to pass into
-    the next call.
+    tool calls made along the way, the updated "history" to pass into the
+    next call, and "usage" (summed prompt/candidates/total token counts
+    across every generate_content call this turn made).
     """
     external_client = client
     default_client = None if external_client is not None else _default_client()
@@ -155,6 +162,16 @@ def run_agent(question: str, history: list = None, client: genai.Client = None) 
     this_turn = [user_content]
 
     tool_call_trace = []
+    usage = {"prompt_tokens": 0, "candidates_tokens": 0, "total_tokens": 0, "requests": 0}
+
+    def track_usage(response) -> None:
+        meta = response.usage_metadata
+        if meta is None:
+            return
+        usage["prompt_tokens"] += meta.prompt_token_count or 0
+        usage["candidates_tokens"] += meta.candidates_token_count or 0
+        usage["total_tokens"] += meta.total_token_count or 0
+        usage["requests"] += 1
 
     for _ in range(MAX_TOOL_ITERATIONS):
         try:
@@ -164,6 +181,7 @@ def run_agent(question: str, history: list = None, client: genai.Client = None) 
                 "answer": f"API error ({exc.code}): {exc.message}",
                 "tool_calls": tool_call_trace,
                 "history": past_turns,  # don't persist a failed turn
+                "usage": usage,
                 "error": True,
             }
         except httpx.TransportError as exc:
@@ -171,8 +189,11 @@ def run_agent(question: str, history: list = None, client: genai.Client = None) 
                 "answer": f"Network error while contacting the Gemini API: {exc}",
                 "tool_calls": tool_call_trace,
                 "history": past_turns,
+                "usage": usage,
                 "error": True,
             }
+
+        track_usage(response)
 
         function_calls = response.function_calls or []
         if not function_calls:
@@ -182,6 +203,7 @@ def run_agent(question: str, history: list = None, client: genai.Client = None) 
                 "answer": response.text or "",
                 "tool_calls": tool_call_trace,
                 "history": past_turns + [this_turn],
+                "usage": usage,
                 "error": False,
             }
 
@@ -207,6 +229,7 @@ def run_agent(question: str, history: list = None, client: genai.Client = None) 
         "answer": "Stopped after too many tool-use iterations without a final answer.",
         "tool_calls": tool_call_trace,
         "history": past_turns,
+        "usage": usage,
         "error": True,
     }
 

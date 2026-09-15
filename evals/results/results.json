@@ -1,0 +1,388 @@
+[
+  {
+    "id": "tool_get_stats",
+    "category": "tool_selection",
+    "question": "Tool wear kolonunda temel istatistikleri göster.",
+    "status": "pass",
+    "notes": [],
+    "tool_calls": [
+      "get_stats"
+    ],
+    "answer": "`tool_wear_min` (takım aşınması - dakika) kolonuna ait temel istatistiksel veriler aşağıdadır:\n\n* **Kayıt Sayısı (Count):** 10.000\n* **Ortalama (Mean):** 107,95 dakika\n* **Standart Sapma (Std):** 63,65 dakika\n* **Minimum (Min):** 0 dakika\n* **%25 Çeyrek (Q1):** 53 dakika\n* **Medyan / %50 Çeyrek (Q2):** 108 dakika\n* **%75 Çeyrek (Q3):** 162 dakika\n* **Maksimum (Max):** 253 dakika",
+    "usage": {
+      "prompt_tokens": 2522,
+      "candidates_tokens": 189,
+      "total_tokens": 3003,
+      "requests": 2
+    },
+    "elapsed_s": 4.78,
+    "error": false
+  },
+  {
+    "id": "tool_detect_anomalies",
+    "category": "tool_selection",
+    "question": "Torque kolonunda anormallik var mı?",
+    "status": "pass",
+    "notes": [],
+    "tool_calls": [
+      "detect_anomalies"
+    ],
+    "answer": "Evet, **Torque (Tork - `torque_nm`)** kolonunda anormallikler bulunmaktadır.\n\nYapılan z-skoru analizine göre (ortalama değerden 3 standart sapma ve daha fazla sapan değerler):\n\n* **Anormal Kayıt Sayısı:** 25 adet\n* **Anormallik Oranı:** %0.25\n* **Tork Ortalaması (Mean):** ~39.99 Nm\n* **Standart Sapma (Std):** ~9.97 Nm\n\n### Öne Çıkan Anormallikler ve Anlamı:\n1. **Düşük Tork Sapmaları (z < -3.0):** \n   * Tork değerinin **3.8 Nm ile 9.8 Nm** seviyelerine kadar düştüğü durumlar tespit edilmiştir (Örn: `UDI 1785` ürün kodu `L48964` için tork **3.8 Nm**, z-skoru **-3.63**).\n   * **Açıklama:** Çok düşük tork değerleri, kesici takımın iş parçasına temas etmemesi, boşta dönme veya mekanik bağlantı kopuklukları gibi durumlara işaret edebilir.\n\n2. **Yüksek Tork Sapmaları (z > 3.0):** \n   * Tork değerinin **70.0 Nm ile 76.6 Nm** seviyelerine kadar çıktığı durumlar tespit edilmiştir (Örn: `UDI 7764` ürün kodu `L54943` için tork **76.6 Nm**, z-skoru **+3.67**).\n   * **Açıklama:** Aşırı yüksek tork değerleri, makinede sıkışma, takım aşınması veya aşırı yüklenme (overstrain) arızalarının habercisi olabilir.",
+    "usage": {
+      "prompt_tokens": 3473,
+      "candidates_tokens": 439,
+      "total_tokens": 4673,
+      "requests": 2
+    },
+    "elapsed_s": 9.3,
+    "error": false
+  },
+  {
+    "id": "tool_plot_trend",
+    "category": "tool_selection",
+    "question": "Process temperature için bir trend grafiği oluştur.",
+    "status": "pass",
+    "notes": [],
+    "tool_calls": [
+      "plot_trend"
+    ],
+    "answer": "Process sıcaklığı (`process_temperature_k`) için trend grafiği başarıyla oluşturuldu ve aşağıdaki dosya yoluna kaydedildi:\n\n📁 **Oluşturulan Grafik Yolu:**  \n`C:\\Users\\sanbe\\OneDrive\\Masaüstü\\llm_proj\\log-analyst-agent\\outputs\\trend_process_temperature_k.png`",
+    "usage": {
+      "prompt_tokens": 2491,
+      "candidates_tokens": 100,
+      "total_tokens": 2809,
+      "requests": 2
+    },
+    "elapsed_s": 6.48,
+    "error": false
+  },
+  {
+    "id": "tool_get_correlation",
+    "category": "tool_selection",
+    "question": "Torque ile rotational speed arasında bir ilişki var mı?",
+    "status": "pass",
+    "notes": [],
+    "tool_calls": [
+      "get_correlation"
+    ],
+    "answer": "Evet, **torque** (tork) ile **rotational speed** (dönme hızı) arasında **güçlü ve negatif** bir ilişki vardır.\n\nVeri seti üzerinde yapılan analiz sonuçları şu şekildedir:\n\n* **Pearson Korelasyon Katsayısı:** `-0.875`\n* **İlişkinin Yönü ve Şiddeti:** Güçlü Negatif İlişki\n\n### Ne Anlama Geliyor?\n* **Dönme Hızı Arttıkça Tork Düşer:** Makinenin dönme hızı (RPM) yükseldiğinde ürettiği veya maruz kaldığı tork değeri azalmaktadır.\n* **Tork Arttıkça Dönme Hızı Düşer:** Yüksek tork gerektiren yük altında çalışma durumlarında ise dönme hızı düşmektedir.\n\nBu durum, elektrik motorları ve talaşlı imalat (milleme) tezgahlarında yaygın olarak görülen güç dengesi ($Güç = Tork \\times Açısal\\ Hız$) ile tam olarak uyumludur.",
+    "usage": {
+      "prompt_tokens": 2456,
+      "candidates_tokens": 266,
+      "total_tokens": 2981,
+      "requests": 2
+    },
+    "elapsed_s": 50.23,
+    "error": false
+  },
+  {
+    "id": "tool_compare_by_failure",
+    "category": "tool_selection",
+    "question": "Tool wear değeri arızalı makinelerde farklı mı davranıyor?",
+    "status": "pass",
+    "notes": [],
+    "tool_calls": [
+      "compare_by_failure"
+    ],
+    "answer": "Evet, **takım aşınması (tool wear)** değeri arızalı makinelerde belirgin şekilde daha yüksek seyretmektedir.\n\nVeri seti üzerindeki analiz sonuçları şu şekildedir:\n\n* **Normal Çalışan Makineler (Arıza Yok):**\n  * **Kayıt Sayısı:** 9.661\n  * **Ortalama Aşınma Süresi:** ~106,69 dakika\n  * **Standart Sapma:** ~62,95 dakika\n\n* **Arızalanan Makineler (Arıza Var):**\n  * **Kayıt Sayısı:** 339\n  * **Ortalama Aşınma Süresi:** ~143,78 dakika\n  * **Standart Sapma:** ~72,76 dakika\n\n### Değerlendirme\nArızalı makinelerde ortalama takım aşınması, normal çalışan makinelere kıyasla **yaklaşık 37,09 dakika daha yüksektir**. Bu durum, takımın kullanım süresi arttıkça yıpranmaya bağlı arıza riskinin (özellikle Takım Aşınması Arızası / TWF) önemli ölçüde yükseldiğini göstermektedir.",
+    "usage": {
+      "prompt_tokens": 2610,
+      "candidates_tokens": 284,
+      "total_tokens": 3622,
+      "requests": 2
+    },
+    "elapsed_s": 11.53,
+    "error": false
+  },
+  {
+    "id": "tool_get_failure_summary",
+    "category": "tool_selection",
+    "question": "Genel arıza özetini ver.",
+    "status": "pass",
+    "notes": [],
+    "tool_calls": [
+      "get_failure_summary"
+    ],
+    "answer": "Veri setindeki makine arızalarına ilişkin genel özet aşağıda sunulmuştur:\n\n### 1. Genel Arıza Durumu\n* **Toplam Kayıt Sayısı:** 10.000\n* **Toplam Arıza Sayısı:** 339\n* **Genel Arıza Oranı:** %3,39\n\n---\n\n### 2. Arıza Türlerine Göre Dağılım\nArızalar kök nedenlerine göre incelendiğinde öne çıkan türler şu şekildedir:\n* **Isı Dağılımı Arızası (Heat Dissipation Failure):** 115 adet (%1,15) — Proses ve hava sıcaklığı farkı ile çalışma koşullarından kaynaklanan yetersiz soğutma durumları.\n* **Aşırı Yük / Gerinim Arızası (Overstrain Failure):** 98 adet (%0,98) — Tork ve takım aşınmasının yüksek seviyelere ulaşması sonucu oluşan aşırı zorlanmalar.\n* **Güç Arızası (Power Failure):** 95 adet (%0,95) — Dönme hızı ve tork bileşiminin (güç) belirlenen güvenli aralıkların dışına çıkması.\n* **Takım Aşınması Arızası (Tool Wear Failure):** 46 adet (%0,46) — Kesici takımın kullanım ömrünü/dakikasını tamamlaması nedeniyle oluşan arızalar.\n* **Rastgele Arıza (Random Failure):** 19 adet (%0,19) — Belirli bir sensör eşiğine bağlı olmayan rastgele arızalar.\n\n---\n\n### 3. Ürün Kalite Tipine Göre Arıza Oranları\nÜrün kalite tiplerine (L: Düşük, M: Orta, H: Yüksek kalite) göre arıza dağılımı:\n* **Düşük Kalite (L):** 235 arıza / 6.000 toplam kayıt (Arıza Oranı: %3,92)\n* **Orta Kalite (M):** 83 arıza / 2.997 toplam kayıt (Arıza Oranı: %2,77)\n* **Yüksek Kalite (H):** 21 arıza / 1.003 toplam kayıt (Arıza Oranı: %2,09)\n\n**Özet Değerlendirme:** Ürün kalitesi düştükçe (H -> M -> L) arıza oranının arttığı görülmektedir. En sık karşılaşılan arıza türleri Isı Dağılımı, Aşırı Yük ve Güç arızalarıdır.",
+    "usage": {
+      "prompt_tokens": 2562,
+      "candidates_tokens": 597,
+      "total_tokens": 3529,
+      "requests": 2
+    },
+    "elapsed_s": 7.19,
+    "error": false
+  },
+  {
+    "id": "chain_compare_two_columns",
+    "category": "multi_tool",
+    "question": "Torque ve tool wear kolonlarını karşılaştır, hangisinde daha fazla anormallik var?",
+    "status": "pass",
+    "notes": [],
+    "tool_calls": [
+      "detect_anomalies",
+      "detect_anomalies"
+    ],
+    "answer": "Torque (`torque_nm`) ve Tool Wear (`tool_wear_min`) kolonlarında z-skoru yöntemiyle (varsayılan 3.0 standart sapma eşiği kullanılarak) yapılan anormallik tespiti sonuçları şu şekildedir:\n\n### 1. Torque (`torque_nm`)\n* **Anormallik Sayısı:** 25  \n* **Anormallik Oranı:** %0,25  \n* **Ortalama Değer:** 39,99 Nm  \n* **Standart Sapma:** 9,97 Nm  \n* **Açıklama:** Tork değerlerinde ortalamanın 3 standart sapma ötesine geçen 25 adet anormallik (aşırı düşük değerler örn. 3,8 Nm ve aşırı yüksek değerler örn. 76,6 Nm) tespit edilmiştir.\n\n### 2. Tool Wear (`tool_wear_min`)\n* **Anormallik Sayısı:** 0  \n* **Anormallik Oranı:** %0,00  \n* **Ortalama Değer:** 107,95 dakika  \n* **Standart Sapma:** 63,65 dakika  \n* **Açıklama:** Takım aşınması süresinde ±3 standart sapma sınırlarını aşan hiçbir aşırı değer (anormallik) tespit edilmemiştir.\n\n---\n\n### Sonuç\n**Torque (`torque_nm`)** kolonunda daha fazla anormallik bulunmaktadır (25 adet anormallik, Tool Wear kolonunda ise 0 adet).",
+    "usage": {
+      "prompt_tokens": 3574,
+      "candidates_tokens": 398,
+      "total_tokens": 4569,
+      "requests": 2
+    },
+    "elapsed_s": 34.28,
+    "error": false
+  },
+  {
+    "id": "chain_riskiest_column",
+    "category": "multi_tool",
+    "question": "En riskli sensör kolonunu bul ve onun trend grafiğini çiz.",
+    "status": "pass",
+    "notes": [],
+    "tool_calls": [
+      "compare_by_failure",
+      "compare_by_failure",
+      "compare_by_failure",
+      "compare_by_failure",
+      "compare_by_failure",
+      "get_failure_summary",
+      "detect_anomalies",
+      "detect_anomalies",
+      "detect_anomalies",
+      "get_correlation",
+      "plot_trend"
+    ],
+    "answer": "Yaptığım detaylı veri ve kök neden analizlerine göre, sistemdeki **en riskli sensör kolonu Tork (`torque_nm`)** olarak belirlenmiştir. \n\nBunun nedenlerini, diğer sensörlerle karşılaştırmalı istatistiklerini ve çizilen trend grafiğinin detaylarını aşağıda bulabilirsiniz:\n\n---\n\n### 1. Neden Tork (`torque_nm`) En Riskli Sensör?\n\nArıza yapan makineler ile normal çalışan makinelerin sensör değerlerini karşılaştırdığımızda (`compare_by_failure`), arıza durumunda en dramatik ve anlamlı sapmayı gösteren değişkenin tork olduğunu görüyoruz:\n\n*   **Standartlaştırılmış Sapma Lideri:** \n    *   **Normal Çalışma Ortalaması:** $39.63\\text{ Nm}$ (Standart Sapma: $9.47\\text{ Nm}$)\n    *   **Arıza Durumu Ortalaması:** $50.17\\text{ Nm}$ (Standart Sapma: $16.37\\text{ Nm}$)\n    *   **Ortalama Farkı:** $+10.54\\text{ Nm}$ artış gerçekleşmektedir. Bu fark, normal çalışmadaki standart sapmanın tam **1.11 katına** denk gelir. Diğer hiçbir sensörde normal dağılımı bu denli aşan bir sapma bulunmamaktadır.\n*   **Kritik Arıza İlişkisi:** Verisetindeki toplam 10,000 kayıtta gerçekleşen **339 arızanın** detaylarına bakıldığında; torkun doğrudan tetikleyici olduğu **Overstrain Failure (Aşırı Gerilim Arızası - 98 adet)** ve **Power Failure (Güç Arızası - 95 adet)** en baskın arıza türleri arasındadır. \n*   **Hız ile Ters İlişki:** Tork ile Dönüş Hızı (`rotational_speed_rpm`) arasında **-0.875** oranında **çok güçlü negatif bir korelasyon** bulunmaktadır. Aşırı yüksek tork değerleri makine devrini kritik düzeyde düşürmekte ve motorun durmasına (stalling) ya da aşırı zorlanarak yanmasına yol açmaktadır.\n\n---\n\n### 2. Diğer Sensörlerin Karşılaştırmalı Durumu\nTorkun risk seviyesini daha net görebilmek için diğer sensörlerin normal vs. arızalı durum farklarına bakabiliriz:\n*   **Takım Aşınması (`tool_wear_min`):** Normalde $106.69\\text{ dk}$ iken arızada $143.78\\text{ dk}$'ya çıkmaktadır (Fark: $+37.09\\text{ dk}$, normal standart sapmanın 0.59 katı).\n*   **Hava Sıcaklığı (`air_temperature_k`):** Normalde $299.97\\text{ K}$ iken arızada $300.89\\text{ K}$'dir (Fark: $+0.91\\text{ K}$, normal standart sapmanın 0.46 katı).\n*   **Dönüş Hızı (`rotational_speed_rpm`):** Normalde $1540.26\\text{ rpm}$ iken arızada $1496.49\\text{ rpm}$'ye gerilemektedir. Ancak arıza anındaki standart sapma $384.94\\text{ rpm}$'e fırlayarak hızın tork değişimlerine bağlı olarak çok istikrarsızlaştığını göstermektedir.\n*   **Proses Sıcaklığı (`process_temperature_k`):** Normalde $309.99\\text{ K}$ iken arızada $310.29\\text{ K}$'dir (Fark: $+0.29\\text{ K}$).\n\n---\n\n### 3. Tork Trend Grafiği\n\nTork sensörünün tüm veri süresince gösterdiği dalgalanmaları ve davranış trendini gösteren çizgi grafik başarıyla oluşturulmuş ve sisteme kaydedilmiştir.\n\n*   **Kaydedilen Dosya Yolu:**  \n    `C:\\Users\\sanbe\\OneDrive\\Masaüstü\\llm_proj\\log-analyst-agent\\outputs\\trend_torque_nm.png`\n\nBu grafik üzerinde, tork değerinin normal çalışma bandı olan $30\\text{ - }50\\text{ Nm}$ aralığının dışına çıkarak $70\\text{ Nm}$ üzerine fırladığı (ya da $10\\text{ Nm}$ altına düştüğü) anormallikleri gözlemleyebilirsiniz. Bu ani tork sıçramaları kestirimci bakım sistemleri için en önemli erken uyarı sinyalidir.",
+    "usage": {
+      "prompt_tokens": 26784,
+      "candidates_tokens": 1304,
+      "total_tokens": 31771,
+      "requests": 6
+    },
+    "elapsed_s": 45.7,
+    "error": false
+  },
+  {
+    "id": "chain_failure_root_cause",
+    "category": "multi_tool",
+    "question": "Hangi ürün tipinde en çok arıza var ve bunun olası sensör nedeni ne olabilir?",
+    "status": "pass",
+    "notes": [],
+    "tool_calls": [
+      "get_failure_summary",
+      "compare_by_failure",
+      "compare_by_failure",
+      "compare_by_failure",
+      "compare_by_failure",
+      "compare_by_failure"
+    ],
+    "answer": "Veri kümesindeki analiz sonuçlarına göre en çok arıza görülen ürün tipi **L (Low / Düşük Kalite)** ürün tipidir. \n\nAşağıda bu arızaların dağılımını ve arkasında yatan olası sensör nedenlerini detaylıca bulabilirsiniz:\n\n### 1. Ürün Tiplerine Göre Arıza Dağılımı\nVeri kümesindeki arıza özetine baktığımızda arızaların ürün tiplerine göre dağılımı şu şekildedir:\n*   **L (Düşük Kalite):** Toplam 6.000 kayıttan **235 arıza** (%3,92 arıza oranı) — **En yüksek arıza sayısı ve oranına sahip ürün tipidir.**\n*   **M (Orta Kalite):** Toplam 2.997 kayıttan **83 arıza** (%2,77 arıza oranı)\n*   **H (Yüksek Kalite):** Toplam 1.003 kayıttan **21 arıza** (%2,09 arıza oranı)\n\n---\n\n### 2. Olası Sensör Nedenleri ve Arıza Modları\nMakinelerin arızalanma sebeplerini anlamak için arıza modlarını ve arıza anındaki sensör verilerini, normal çalışma koşullarıyla kıyasladığımızda üç temel risk faktörü öne çıkmaktadır:\n\n#### A. Yüksek Tork ve Güç Aşımı (Aşırı Zorlanma)\n*   **Arıza Modu:** Veri kümesinde **98 Aşırı Zorlanma Hatası (Overstrain Failure)** ve **95 Güç Hatası (Power Failure)** gerçekleşmiştir.\n*   **Sensör Analizi:** Normal çalışan makinelerin ortalama torku **39,63 Nm** iken, arıza yapan makinelerin ortalama torku **50,17 Nm** seviyesine çıkmaktadır (yaklaşık **+10,54 Nm artış**). Bu durum, makinenin mekanik olarak ciddi şekilde zorlandığını göstermektedir.\n\n#### B. Isı Dağılımı Problemleri (Aşırı Isınma)\n*   **Arıza Modu:** En sık görülen arıza modu **115 hata** ile **Isı Dağılımı Hatasıdır (Heat Dissipation Failure)**.\n*   **Sensör Analizi:** Arıza anlarında ortalama ortam sıcaklığı (Air Temperature) **300,89 K** değerine ulaşırken, normal operasyonlarda bu değer **299,97 K** seviyesindedir. Sıcaklık artışı ısı transferini zorlaştırmakta ve sistemi termal arızaya sürüklemektedir.\n\n#### C. Takım Aşınması (Tool Wear)\n*   **Arıza Modu:** Doğrudan takım aşınmasından kaynaklanan **46 arıza (Tool Wear Failure)** bildirilmiştir.\n*   **Sensör Analizi:** Normal çalışan makinelerde ortalama takım aşınması **106,69 dakika** seviyesindeyken, arıza yapan makinelerde bu süre **143,78 dakikaya** (yaklaşık **+37,09 dakika artış**) çıkmaktadır. L tipi (düşük kalite) ürünlerin işlenmesi sırasında takımların yıpranma oranının daha yüksek veya toleransın daha düşük olması arızayı tetikliyor olabilir.\n\n### Özet Tavsiye\n**L Tipi** ürünlerin işlendiği süreçlerde arızaları azaltmak için **tork (torque_nm)** değerinin 50 Nm üzerine çıkması engellenmeli, ortam sıcaklığı kontrol altında tutulmalı ve özellikle **takım aşınma süresi (tool_wear_min)** 140 dakikayı aşmadan önce önleyici bakım (kesici uç değişimi vb.) planlanmalıdır.",
+    "usage": {
+      "prompt_tokens": 7679,
+      "candidates_tokens": 977,
+      "total_tokens": 10443,
+      "requests": 4
+    },
+    "elapsed_s": 54.25,
+    "error": false
+  },
+  {
+    "id": "threshold_sensitive_scan",
+    "category": "parameters",
+    "question": "Torque'da çok hassas bir anomali taraması yap, 1 standart sapma eşiğiyle.",
+    "status": "infra_error",
+    "notes": [
+      "API error (429): You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor"
+    ],
+    "tool_calls": [],
+    "answer": "API error (429): You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.5-flash\nPlease retry in 3.004196142s.",
+    "usage": {
+      "prompt_tokens": 0,
+      "candidates_tokens": 0,
+      "total_tokens": 0,
+      "requests": 0
+    },
+    "elapsed_s": 36.56,
+    "error": true
+  },
+  {
+    "id": "threshold_extreme_only",
+    "category": "parameters",
+    "question": "Sadece çok ekstrem anomalileri göster, 5 sigma üstü, tool wear için.",
+    "status": "pass",
+    "notes": [],
+    "tool_calls": [
+      "detect_anomalies"
+    ],
+    "answer": "`tool_wear_min` (takım aşınması) sütunu için **5 sigma (5 standart sapma)** eşiği kullanılarak yapılan analizde **hiçbir ekstrem anomaliye rastlanmamıştır** (0 anomali).\n\nBunun teknik açıklaması şu şekildedir:\n* **Ortalama Değer (Mean):** ~107.95 dakika\n* **Standart Sapma (Std):** ~63.65 dakika\n* **5 Sigma Sınırı:** $107.95 + (5 \\times 63.65) = 426.22$ dakika\n\nBir kaydın 5 sigma üzerinde anomali sayılabilmesi için takım aşınma süresinin **426.22 dakikanın üzerinde** olması gerekirdi. Veri setindeki maksimum takım aşınma değerleri bu seviyeye ulaşmadığı için bu derece ekstrem bir sapma bulunmamaktadır.\n\nEğer daha standart bir anomali analizi görmek isterseniz, eşik değerini **3 sigma** seviyesine çekerek yeniden sorgulayabilirim.",
+    "usage": {
+      "prompt_tokens": 2551,
+      "candidates_tokens": 270,
+      "total_tokens": 3383,
+      "requests": 2
+    },
+    "elapsed_s": 28.52,
+    "error": false
+  },
+  {
+    "id": "invalid_column_humidity",
+    "category": "invalid_input",
+    "question": "Nem (humidity) kolonunda anormallik var mı?",
+    "status": "pass",
+    "notes": [],
+    "tool_calls": [],
+    "answer": "Mevcut veri setinde \"Nem\" (humidity) adında bir sensör kolonu bulunmamaktadır. AI4I 2020 Predictive Maintenance veri setinde analiz edebileceğimiz sensör kolonları şunlardır:\n\n* **Hava Sıcaklığı** (`air_temperature_k` - Air temperature [K])\n* **Proses Sıcaklığı** (`process_temperature_k` - Process temperature [K])\n* **Dönüş Hızı** (`rotational_speed_rpm` - Rotational speed [rpm])\n* **Tork** (`torque_nm` - Torque [Nm])\n* **Takım Aşınması** (`tool_wear_min` - Tool wear [min])\n\nEğer bu kolonlardan herhangi birinde anormallik analizi yapmamı isterseniz (örneğin hava sıcaklığı veya tork değerlerinde), bunu memnuniyetle gerçekleştirebilirim. Hangi kolonu incelemek istersiniz?",
+    "usage": {
+      "prompt_tokens": 1141,
+      "candidates_tokens": 208,
+      "total_tokens": 1754,
+      "requests": 1
+    },
+    "elapsed_s": 3.05,
+    "error": false
+  },
+  {
+    "id": "invalid_column_pressure",
+    "category": "invalid_input",
+    "question": "Basınç değerlerinin ortalamasını ver.",
+    "status": "pass",
+    "notes": [],
+    "tool_calls": [
+      "get_stats"
+    ],
+    "answer": "Mevcut veri setinde doğrudan bir **basınç (pressure)** sensörü sütunu bulunmamaktadır. Veri kümesinde yer alan sensörler ve tork (torque) değeri şu şekildedir:\n\nEğer \"basınç\" ile dönme kuvvetini ifade eden **Tork (torque_nm)** değerini kastettiyseniz, tork değerine ait istatistikler şu şekildedir:\n*   **Ortalama Tork:** 39.987 Nm (yaklaşık 40.0 Nm)\n*   **Minimum Tork:** 3.8 Nm\n*   **Maksimum Tork:** 76.6 Nm\n*   **Toplam Kayıt Sayısı:** 10.000\n\nVeri setindeki diğer mevcut sensörler şunlardır:\n*   **Hava Sıcaklığı (`air_temperature_k`)**\n*   **İşlem Sıcaklığı (`process_temperature_k`)**\n*   **Dönüş Hızı (`rotational_speed_rpm`)**\n*   **Takım Aşınması (`tool_wear_min`)**\n\nEğer bu sütunlardan birinin veya tamamının ortalamasını öğrenmek isterseniz, lütfen belirtiniz.",
+    "usage": {
+      "prompt_tokens": 3002,
+      "candidates_tokens": 290,
+      "total_tokens": 4302,
+      "requests": 2
+    },
+    "elapsed_s": 30.2,
+    "error": false
+  },
+  {
+    "id": "invalid_column_vibration_plot",
+    "category": "invalid_input",
+    "question": "Titreşim (vibration) kolonu için trend grafiği çiz.",
+    "status": "pass",
+    "notes": [],
+    "tool_calls": [],
+    "answer": "Mevcut veri setinde **titreşim (vibration)** sütunu/sensör verisi bulunmamaktadır. \n\nAnaliz edilebilecek ve trend grafiği çizdirilebilecek mevcut sensör sütunları şunlardır:\n\n* **Hava Sıcaklığı** (`air_temperature_k`)\n* **İşlem Sıcaklığı** (`process_temperature_k`)\n* **Dönme Hızı** (`rotational_speed_rpm`)\n* **Tork** (`torque_nm`)\n* **Takım Aşınması** (`tool_wear_min`)\n\nBu sensörlerden biri için trend grafiği oluşturmamı isterseniz lütfen belirtiniz.",
+    "usage": {
+      "prompt_tokens": 1144,
+      "candidates_tokens": 150,
+      "total_tokens": 1821,
+      "requests": 1
+    },
+    "elapsed_s": 26.25,
+    "error": false
+  },
+  {
+    "id": "grounding_list_columns",
+    "category": "grounding",
+    "question": "Bana veri setindeki tüm kolonları ve ne anlama geldiklerini gösterir misin?",
+    "status": "fail",
+    "notes": [
+      "no tool was called, but the answer contains number-like tokens: ['1. ', '10.000 ', '60', '30', '10', '2. ', '3. '] (possible ungrounded/memorized stat)"
+    ],
+    "tool_calls": [],
+    "answer": "Yapay zeka ve endüstriyel kestirimci bakım çalışmalarında sıklıkla kullanılan AI4I 2020 Predictive Maintenance (Öngörücü Bakım) veri setinde yer alan temel kolonlar ve bunların anlamları şu şekildedir:\n\n### 1. Kimlik ve Ürün Özellikleri\n*   **UDI:** Her bir kayıt için 1 ile 10.000 arasında değişen benzersiz bir satır numarası/kimlik bilgisidir.\n*   **Product ID (Ürün Kimliği):** Ürünün kalite sınıfına göre belirlenen bir harf (L, M veya H) ve ardından gelen bir seri numarasından oluşur.\n*   **Type (Tip/Kalite Sınıfı):** Ürünün kalite varyantını gösterir:\n    *   **L (Low - Düşük):** Düşük kaliteli ürün (veri setinin yaklaşık %60'ını oluşturur).\n    *   **M (Medium - Orta):** Orta kaliteli ürün (yaklaşık %30).\n    *   **H (High - Yüksek):** Yüksek kaliteli ürün (yaklaşık %10).\n\n### 2. Sensör Ölçümleri (Sayısal Kolonlar)\n*   **Air temperature [K] (`air_temperature_k`):** Kelvin cinsinden hava sıcaklığıdır. Makinenin çalıştığı ortamın sıcaklığını gösterir.\n*   **Process temperature [K] (`process_temperature_k`):** Kelvin cinsinden işlem (proses) sıcaklığıdır. Çalışma anında makinenin içindeki sıcaklığı gösterir.\n*   **Rotational speed [rpm] (`rotational_speed_rpm`):** Dakikadaki devir sayısı (RPM) cinsinden milin dönüş hızıdır.\n*   **Torque [Nm] (`torque_nm`):** Newton-metre (Nm) cinsinden tork değeridir. Milin uyguladığı dönme kuvvetini gösterir.\n*   **Tool wear [min] (`tool_wear_min`):** Dakika cinsinden takım aşınma süresidir. İşlem sırasında kullanılan kesici takımın ne kadar süredir aşındığını gösterir.\n\n### 3. Hedef ve Hata Etiketleri\n*   **Machine failure (Makine Arızası):** Makinenin o anki durumda arıza yapıp yapmadığını gösteren ikili (binary: 0 veya 1) hedef değişkendir. (1 = Arıza var, 0 = Arıza yok).\n*   **Arıza Türleri (Failure Modes):** Eğer bir makine arızası gerçekleşmişse, bunun hangi nedenden kaynaklandığını gösteren alt kırılımlardır:\n    *   **TWF (Tool Wear Failure - Takım Aşınması Arızası):** Takım aşınma süresi sınırları aştığında meydana gelen arıza.\n    *   **HDF (Heat Dissipation Failure - Isı Dağılımı Arızası):** Hava sıcaklığı ile proses sıcaklığı arasındaki fark yetersiz olduğunda ve devir hızı çok düşük olduğunda ısı transferi yetersizliğinden kaynaklanan arıza.\n    *   **PWF (Power Failure - Güç Arızası):** Tork ve devir hızının çarpımı olan gücün, makine limitlerinin dışına çıkması (çok düşük veya çok yüksek olması) nedeniyle oluşan arıza.\n    *   **OSF (Overstrain Failure - Aşırı Zorlanma Arızası):** Takım aşınması ve tork çarpımının (aşınma geriliminin) makine kapasitesini aşmasıyla oluşan arıza.\n    *   **RNF (Random Failures - Rastgele Arızalar):** Belirli bir nedene bağlı olmayan, rastgele meydana gelen arıza türü.\n\nVeri setindeki sayısal değerlerin özet istatistiklerini almak, arıza durumlarını analiz etmek veya değişkenler arasındaki ilişkileri incelemek isterseniz ilgili analiz araçlarını kullanarak detaylı bilgi sağlayabilirim.",
+    "usage": {
+      "prompt_tokens": 1148,
+      "candidates_tokens": 878,
+      "total_tokens": 2715,
+      "requests": 1
+    },
+    "elapsed_s": 7.88,
+    "error": false
+  },
+  {
+    "id": "grounding_what_is_twf",
+    "category": "grounding",
+    "question": "TWF ne demek, kısaca açıklar mısın?",
+    "status": "pass",
+    "notes": [],
+    "tool_calls": [],
+    "answer": "**TWF**, **Tool Wear Failure** (Takım Aşınması Arızası) anlamına gelir.\n\nEndüstriyel üretimde (özellikle bu veri setindeki frezeleme gibi talaşlı imalat işlemlerinde), kesici takım kullanıldıkça zamanla aşınır ve yıpranır. Takımın toplam çalışma süresi (veri setindeki `tool_wear_min` değeri) kritik bir limiti aştığında veya takım artık işlevini düzgün yerine getiremeyecek kadar aşındığında meydana gelen arızaları ifade eder. \n\nKısacası, **kesici ucun ömrünü tamamlaması ve aşırı yıpranması nedeniyle oluşan makine arıza modudur.**",
+    "usage": {
+      "prompt_tokens": 1141,
+      "candidates_tokens": 150,
+      "total_tokens": 1647,
+      "requests": 1
+    },
+    "elapsed_s": 6.72,
+    "error": false
+  },
+  {
+    "id": "grounding_dataset_purpose",
+    "category": "grounding",
+    "question": "Bu veri seti hangi amaçla toplanmış, makine tipi nedir?",
+    "status": "pass",
+    "notes": [],
+    "tool_calls": [],
+    "answer": "Bu veri seti, **endüstriyel kestirimci bakım (predictive maintenance)** uygulamalarını geliştirmek, test etmek ve makine arızalarını önceden tahmin edebilecek makine öğrenmesi modelleri eğitmek amacıyla toplanmıştır. \n\nVeri setinin temel özellikleri şunlardır:\n\n* **Makine Tipi:** Veriler bir **freze makinesine (milling machine)** aittir.\n* **Toplanan Veriler:** Freze makinesinin çalışması esnasında kaydedilen çeşitli sensör ölçümlerini (hava sıcaklığı, proses sıcaklığı, dönüş hızı, tork ve takım aşınma süresi) ve makinenin arıza yapıp yapmadığını gösteren etiketleri içerir.\n* **Amacı:** Makinenin normal çalışma koşulları ile arıza durumları arasındaki ilişkileri analiz etmek, arızaları gerçekleşmeden önce tespit etmek ve arızanın türünü (güç arızası, takım aşınması, aşırı zorlanma vb.) sınıflandırmaktır.\n\nEğer mevcut veri setindeki belirli istatistikleri, arıza oranlarını veya sensör değerlerinin analizlerini merak ediyorsanız, ilgili araçları kullanarak size detaylı ve güncel veriler sunabilirim.",
+    "usage": {
+      "prompt_tokens": 1143,
+      "candidates_tokens": 264,
+      "total_tokens": 1814,
+      "requests": 1
+    },
+    "elapsed_s": 19.02,
+    "error": false
+  },
+  {
+    "id": "review_predict_next_failure",
+    "category": "review",
+    "question": "Bir sonraki arızanın ne zaman olacağını tahmin eder misin?",
+    "status": "infra_error",
+    "notes": [
+      "API error (429): You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor"
+    ],
+    "tool_calls": [],
+    "answer": "API error (429): You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.5-flash\nPlease retry in 26.806599877s.",
+    "usage": {
+      "prompt_tokens": 0,
+      "candidates_tokens": 0,
+      "total_tokens": 0,
+      "requests": 0
+    },
+    "elapsed_s": 36.2,
+    "error": true
+  },
+  {
+    "id": "review_data_provenance",
+    "category": "review",
+    "question": "Bu verileri kim topladı, hangi fabrikada üretildi?",
+    "status": "review",
+    "notes": [],
+    "tool_calls": [],
+    "answer": "Bu veri kümesi, akademik çalışmalarda ve makine öğrenimi modellerini test etmek amacıyla oluşturulmuş **AI4I 2020 Predictive Maintenance Dataset** (Yapay Zeka Endüstriyel Enstitüsü 2020 Öngörücü Bakım Veri Kümesi) referans alınarak hazırlanmıştır. \n\nVeri kümesinin kökeni ve toplanma detayları şu şekildedir:\n\n* **Kim topladı/hazırladı?** Bu veri kümesi, Almanya'daki **HTW Berlin** (Hochschule für Technik und Wirtschaft Berlin / Berlin Teknik ve Ekonomik Bilimler Uygulamalı Bilimler Üniversitesi) bünyesinde çalışan **Stephan Matzka** tarafından 2020 yılında yayınlanmıştır.\n* **Hangi fabrikada üretildi?** Bu veri kümesi gerçek bir fabrikadaki fiziksel makinelerden doğrudan toplanmamış, **gerçekçi bir endüstriyel frezeleme (milling) makinesinin davranışlarını taklit eden bir simülasyon (yapay veri üretici)** kullanılarak oluşturulmuştur. Simülasyon, gerçek endüstriyel ortamlarda karşılaşılan rüzgar/hava sıcaklığı, proses sıcaklığı, dönme hızı, tork ve takım aşınması (tool wear) gibi parametreler arasındaki fiziksel ilişkileri temel alır.\n\nEğer sisteminizde yüklü olan mevcut veri kümesinin istatistiklerini, arıza oranlarını veya sensör ilişkilerini analiz etmemi isterseniz, ilgili analiz araçlarını kullanarak size detaylı bilgi sunabilirim.",
+    "usage": {
+      "prompt_tokens": 1141,
+      "candidates_tokens": 338,
+      "total_tokens": 2084,
+      "requests": 1
+    },
+    "elapsed_s": 36.92,
+    "error": false
+  },
+  {
+    "id": "review_misleading_premise",
+    "category": "review",
+    "question": "Madem en düşük kaliteli ürün tipi H'dir, H tipindeki arızaları özetle.",
+    "status": "infra_error",
+    "notes": [
+      "Network error while contacting the Gemini API: [SSL: INVALID_SESSION_ID] invalid session id (_ssl.c:992)"
+    ],
+    "tool_calls": [],
+    "answer": "Network error while contacting the Gemini API: [SSL: INVALID_SESSION_ID] invalid session id (_ssl.c:992)",
+    "usage": {
+      "prompt_tokens": 0,
+      "candidates_tokens": 0,
+      "total_tokens": 0,
+      "requests": 0
+    },
+    "elapsed_s": 61.03,
+    "error": true
+  }
+]
