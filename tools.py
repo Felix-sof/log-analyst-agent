@@ -144,6 +144,79 @@ def plot_trend(column: str) -> dict:
     }
 
 
+def get_correlation(column_a: str, column_b: str) -> dict:
+    """Compute the Pearson correlation coefficient between two numeric sensor columns.
+
+    Args:
+        column_a: One of the numeric sensor columns, e.g. "torque_nm".
+        column_b: Another numeric sensor column, e.g. "tool_wear_min".
+    """
+    _validate_numeric_column(column_a)
+    _validate_numeric_column(column_b)
+    df = _get_df()
+
+    if column_a == column_b:
+        return {
+            "column_a": column_a,
+            "column_b": column_b,
+            "correlation": 1.0,
+            "strength": "identical column",
+            "direction": "n/a",
+        }
+
+    corr = df[column_a].corr(df[column_b])
+    abs_corr = abs(corr)
+    if abs_corr >= 0.7:
+        strength = "strong"
+    elif abs_corr >= 0.3:
+        strength = "moderate"
+    else:
+        strength = "weak"
+
+    return {
+        "column_a": column_a,
+        "column_b": column_b,
+        "correlation": round(float(corr), 4),
+        "strength": strength,
+        "direction": "positive" if corr >= 0 else "negative",
+    }
+
+
+def compare_by_failure(column: str) -> dict:
+    """Compare a numeric sensor column's distribution between failed and non-failed records.
+
+    Useful for root-cause questions like "does this sensor reading differ on
+    machines that failed?" - splits the column by machine_failure (0 vs 1)
+    and reports mean/std for each group plus the difference in means.
+
+    Args:
+        column: One of the numeric sensor columns, e.g. "process_temperature_k".
+    """
+    _validate_numeric_column(column)
+    df = _get_df()
+
+    normal = df.loc[df["machine_failure"] == 0, column]
+    failed = df.loc[df["machine_failure"] == 1, column]
+
+    normal_mean = float(normal.mean())
+    failed_mean = float(failed.mean())
+
+    return {
+        "column": column,
+        "normal_operation": {
+            "count": int(normal.count()),
+            "mean": round(normal_mean, 3),
+            "std": round(float(normal.std()), 3),
+        },
+        "failed_operation": {
+            "count": int(failed.count()),
+            "mean": round(failed_mean, 3),
+            "std": round(float(failed.std()), 3),
+        },
+        "mean_difference": round(failed_mean - normal_mean, 3),
+    }
+
+
 def get_failure_summary() -> dict:
     """Return a summary of machine failures broken down by failure type and product type."""
     df = _get_df()
@@ -236,6 +309,51 @@ TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "get_correlation",
+        "description": (
+            "Compute the Pearson correlation coefficient between two numeric "
+            "sensor columns, with a strength/direction interpretation. Use this "
+            "instead of eyeballing two separate get_stats calls when asked how "
+            "two sensor readings relate to each other."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "column_a": {
+                    "type": "string",
+                    "enum": NUMERIC_COLUMNS,
+                    "description": "The first numeric sensor column.",
+                },
+                "column_b": {
+                    "type": "string",
+                    "enum": NUMERIC_COLUMNS,
+                    "description": "The second numeric sensor column.",
+                },
+            },
+            "required": ["column_a", "column_b"],
+        },
+    },
+    {
+        "name": "compare_by_failure",
+        "description": (
+            "Compare a numeric sensor column's mean/std between records where "
+            "the machine failed vs. did not fail. Use this for root-cause "
+            "questions like 'is this sensor reading different on machines that "
+            "failed?' instead of guessing from the overall statistics."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "column": {
+                    "type": "string",
+                    "enum": NUMERIC_COLUMNS,
+                    "description": "The numeric sensor column to compare.",
+                }
+            },
+            "required": ["column"],
+        },
+    },
+    {
         "name": "get_failure_summary",
         "description": (
             "Get a summary of machine failures: overall failure rate, breakdown "
@@ -254,5 +372,7 @@ TOOL_DISPATCH = {
     "get_stats": get_stats,
     "detect_anomalies": detect_anomalies,
     "plot_trend": plot_trend,
+    "get_correlation": get_correlation,
+    "compare_by_failure": compare_by_failure,
     "get_failure_summary": get_failure_summary,
 }
