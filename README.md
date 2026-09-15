@@ -20,6 +20,8 @@ to you in plain language.
    against the DataFrame, results are fed back to Gemini, and it produces a
    final natural-language answer.
 4. **`api.py`** exposes the agent over HTTP via FastAPI.
+5. **`streamlit_app.py`** provides a chat-style web UI on top of the same
+   agent (question in, answer + generated charts out).
 
 ## Dataset
 
@@ -77,6 +79,16 @@ Tool wear kolonunda (0-253 dakika, ortalama ~108 dk) 3 standart sapma
 eşiğine göre herhangi bir anormallik tespit edilmedi...
 ```
 
+### Run the web UI (Streamlit)
+
+```bash
+streamlit run streamlit_app.py
+```
+
+Opens a chat-style UI at `http://localhost:8501` - ask a question, see the
+agent's answer, and view any generated trend charts inline. You can also
+upload a different CSV log from the sidebar.
+
 ### Run the API server
 
 ```bash
@@ -118,6 +130,7 @@ log-analyst-agent/
 ├── tools.py            # tool functions + JSON schemas for the agent
 ├── agent.py             # Gemini tool-use agentic loop
 ├── api.py                 # FastAPI /analyze endpoint
+├── streamlit_app.py    # chat-style web UI
 ├── requirements.txt
 ├── .env.example
 └── README.md
