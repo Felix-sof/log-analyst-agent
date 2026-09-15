@@ -14,11 +14,14 @@ to you in plain language.
    - `get_stats(column)` - descriptive statistics for a sensor column
    - `detect_anomalies(column, threshold)` - z-score based anomaly detection
    - `plot_trend(column)` - saves a trend chart (PNG) for a sensor column
+   - `get_correlation(column_a, column_b)` - Pearson correlation between two columns
+   - `compare_by_failure(column)` - compares a column's mean/std on failed vs. normal records
    - `get_failure_summary()` - failure counts by failure mode and product type
 3. **`agent.py`** runs the agentic tool-use loop against the Google Gemini API
    (free tier): Gemini decides which tool(s) to call, the tools execute
    against the DataFrame, results are fed back to Gemini, and it produces a
-   final natural-language answer.
+   final natural-language answer. Supports multi-turn conversation memory -
+   pass the `history` returned from one call into the next.
 4. **`api.py`** exposes the agent over HTTP via FastAPI.
 5. **`streamlit_app.py`** provides a chat-style web UI on top of the same
    agent (question in, answer + generated charts out).
@@ -36,6 +39,13 @@ Repository, dataset #601).
 
 The dataset is downloaded automatically on first run; it is not bundled in
 this repository.
+
+**Grounding note:** because this is a well-known public dataset, an LLM can
+recognize it and be tempted to recite memorized statistics instead of
+reading the data actually loaded (which may be a different uploaded file).
+`agent.py`'s system prompt explicitly forbids stating any number that
+didn't come from a tool call made in the current conversation - see the
+"Critical grounding rule" in `SYSTEM_PROMPT`.
 
 ## Setup
 
@@ -79,6 +89,9 @@ Tool wear kolonunda (0-253 dakika, ortalama ~108 dk) 3 standart sapma
 eşiğine göre herhangi bir anormallik tespit edilmedi...
 ```
 
+The CLI remembers the conversation across questions in the same session
+(follow-ups like "peki ya torque için?" work without repeating context).
+
 ### Run the web UI (Streamlit)
 
 ```bash
@@ -86,9 +99,11 @@ streamlit run streamlit_app.py
 ```
 
 Opens a chat-style UI at `http://localhost:8501` - ask a question, see the
-agent's answer, and view any generated trend charts inline. You can also
-upload a different log file (CSV, TSV, Excel, JSON, or Parquet) from the
-sidebar.
+agent's answer, and view any generated trend charts inline. The chat
+remembers earlier turns in the session (use the sidebar's "Konuşmayı
+temizle" button to reset). You can also upload a different log file (CSV,
+TSV, Excel, JSON, or Parquet) from the sidebar - this also resets the
+conversation, since old tool results no longer apply to the new data.
 
 ### Run the API server
 
@@ -125,16 +140,42 @@ original or cleaned names) by adding `-F "file=@my_log.xlsx"` to the
 request. Supported formats: `.csv`, `.tsv`, `.xlsx`, `.xls`, `.json`,
 `.parquet`.
 
+For multi-turn conversations, pass the `conversation_id` from a response
+back into the next request's form data to continue that thread with memory:
+
+```bash
+curl -X POST http://localhost:8000/analyze \
+  -F "question=Peki ya rotational speed için?" \
+  -F "conversation_id=<id-from-previous-response>"
+```
+
+(The conversation store is in-memory per server process - it resets on
+restart and isn't shared across multiple workers.)
+
+### Run the tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+Tests cover `tools.py` and `data_loader.py` against a small synthetic
+dataset (fast, deterministic, no network or API key required) - they don't
+test the Gemini integration itself, since that needs a live API call.
+
 ## Project structure
 
 ```
 log-analyst-agent/
-├── data_loader.py     # download + clean the dataset
+├── data_loader.py     # download + clean the dataset, multi-format upload parsing
 ├── tools.py            # tool functions + JSON schemas for the agent
-├── agent.py             # Gemini tool-use agentic loop
+├── agent.py             # Gemini tool-use agentic loop, multi-turn memory
 ├── api.py                 # FastAPI /analyze endpoint
 ├── streamlit_app.py    # chat-style web UI
+├── tests/                 # pytest suite (tools.py, data_loader.py)
 ├── requirements.txt
+├── requirements-dev.txt
+├── pytest.ini
 ├── .env.example
 └── README.md
 ```
