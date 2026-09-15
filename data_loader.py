@@ -56,12 +56,37 @@ def download_dataset(force: bool = False) -> Path:
     return RAW_CSV_PATH
 
 
-def clean_dataset(raw_path: Path = RAW_CSV_PATH) -> pd.DataFrame:
-    """Load the raw CSV, normalize column names/types, and drop exact duplicates."""
-    df = pd.read_csv(raw_path)
+SUPPORTED_UPLOAD_EXTENSIONS = (".csv", ".tsv", ".xlsx", ".xls", ".json", ".parquet")
+
+
+def _read_any_format(path: Path, filename: str) -> pd.DataFrame:
+    """Read a tabular file into a DataFrame based on its extension."""
+    suffix = Path(filename).suffix.lower()
+    if suffix == ".csv":
+        return pd.read_csv(path)
+    if suffix == ".tsv":
+        return pd.read_csv(path, sep="\t")
+    if suffix in (".xlsx", ".xls"):
+        return pd.read_excel(path)
+    if suffix == ".json":
+        return pd.read_json(path)
+    if suffix == ".parquet":
+        return pd.read_parquet(path)
+    raise ValueError(
+        f"Unsupported file type '{suffix or filename}'. "
+        f"Supported formats: {', '.join(SUPPORTED_UPLOAD_EXTENSIONS)}"
+    )
+
+
+def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalize column names/types and drop exact duplicates and bad rows.
+
+    Works whether the DataFrame still has the original AI4I column names
+    (e.g. "Tool wear [min]") or already-clean ones (e.g. "tool_wear_min") -
+    COLUMN_RENAME_MAP only touches columns that match its original names.
+    """
     df = df.rename(columns=COLUMN_RENAME_MAP)
     df = df.drop_duplicates()
-    df["type"] = df["type"].astype("category")
 
     numeric_cols = [
         "air_temperature_k",
@@ -70,11 +95,29 @@ def clean_dataset(raw_path: Path = RAW_CSV_PATH) -> pd.DataFrame:
         "torque_nm",
         "tool_wear_min",
     ]
+    missing = [col for col in numeric_cols + ["type"] if col not in df.columns]
+    if missing:
+        raise ValueError(
+            f"Uploaded file is missing required column(s): {missing}. "
+            f"Expected AI4I 2020 dataset columns (original or cleaned names)."
+        )
+
+    df["type"] = df["type"].astype("category")
     for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
     df = df.dropna(subset=numeric_cols)
     return df.reset_index(drop=True)
+
+
+def clean_dataset(raw_path: Path = RAW_CSV_PATH) -> pd.DataFrame:
+    """Load the raw CSV and clean it. Kept for the default-dataset pipeline."""
+    return clean_dataframe(pd.read_csv(raw_path))
+
+
+def load_uploaded_file(path: Path, filename: str) -> pd.DataFrame:
+    """Read and clean a user-uploaded log file in any supported format."""
+    return clean_dataframe(_read_any_format(path, filename))
 
 
 def load_data(force_download: bool = False) -> pd.DataFrame:

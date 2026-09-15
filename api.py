@@ -1,9 +1,10 @@
 """
 FastAPI wrapper around the Log Analyst Agent.
 
-POST /analyze accepts a natural-language question (and, optionally, a CSV
-log file in the same format as the AI4I 2020 dataset) and returns a JSON
-report with the agent's answer and the tool calls it made to produce it.
+POST /analyze accepts a natural-language question (and, optionally, a log
+file in CSV/TSV/Excel/JSON/Parquet, same columns as the AI4I 2020 dataset)
+and returns a JSON report with the agent's answer and the tool calls it
+made to produce it.
 """
 
 import tempfile
@@ -15,7 +16,7 @@ from fastapi.responses import JSONResponse
 
 import agent
 import tools
-from data_loader import clean_dataset
+from data_loader import SUPPORTED_UPLOAD_EXTENSIONS, load_uploaded_file
 
 app = FastAPI(
     title="Log Analyst Agent API",
@@ -35,18 +36,33 @@ def health() -> dict:
 async def analyze(
     question: str = Form(..., description="Natural-language question about the log data"),
     file: Optional[UploadFile] = File(
-        None, description="Optional CSV log file (AI4I 2020 dataset format) to analyze instead of the default dataset"
+        None,
+        description=(
+            "Optional log file to analyze instead of the default dataset. "
+            f"Supported formats: {', '.join(SUPPORTED_UPLOAD_EXTENSIONS)}"
+        ),
     ),
 ):
     """Run the Log Analyst Agent against the default dataset or an uploaded log file."""
     dataset_source = "default"
 
     if file is not None:
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+        suffix = Path(file.filename or "").suffix.lower()
+        if suffix not in SUPPORTED_UPLOAD_EXTENSIONS:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": (
+                        f"Unsupported file type '{suffix or file.filename}'. "
+                        f"Supported formats: {', '.join(SUPPORTED_UPLOAD_EXTENSIONS)}"
+                    )
+                },
+            )
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
             tmp.write(await file.read())
             tmp_path = Path(tmp.name)
         try:
-            tools._df = clean_dataset(tmp_path)
+            tools._df = load_uploaded_file(tmp_path, file.filename)
             dataset_source = file.filename
         except Exception as exc:  # noqa: BLE001 - report bad uploads to the caller
             return JSONResponse(

@@ -12,7 +12,7 @@ import streamlit as st
 
 import agent
 import tools
-from data_loader import clean_dataset
+from data_loader import SUPPORTED_UPLOAD_EXTENSIONS, load_uploaded_file
 
 st.set_page_config(page_title="Log Analyst Agent", page_icon="🛠️", layout="wide")
 
@@ -25,15 +25,18 @@ st.caption(
 
 with st.sidebar:
     st.header("Veri Seti")
+    upload_types = [ext.lstrip(".") for ext in SUPPORTED_UPLOAD_EXTENSIONS]
     uploaded_file = st.file_uploader(
-        "Farklı bir CSV log dosyası yükle (opsiyonel, AI4I formatında)", type="csv"
+        f"Farklı bir log dosyası yükle (opsiyonel, AI4I kolon formatında) - {', '.join(upload_types)}",
+        type=upload_types,
     )
     if uploaded_file is not None:
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+        suffix = Path(uploaded_file.name).suffix.lower()
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
             tmp.write(uploaded_file.getvalue())
             tmp_path = Path(tmp.name)
         try:
-            tools._df = clean_dataset(tmp_path)
+            tools._df = load_uploaded_file(tmp_path, uploaded_file.name)
             st.success(f"'{uploaded_file.name}' yüklendi ve kullanılıyor.")
         except Exception as exc:  # noqa: BLE001
             st.error(f"Dosya okunamadı: {exc}")

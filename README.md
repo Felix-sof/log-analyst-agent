@@ -87,7 +87,8 @@ streamlit run streamlit_app.py
 
 Opens a chat-style UI at `http://localhost:8501` - ask a question, see the
 agent's answer, and view any generated trend charts inline. You can also
-upload a different CSV log from the sidebar.
+upload a different log file (CSV, TSV, Excel, JSON, or Parquet) from the
+sidebar.
 
 ### Run the API server
 
@@ -119,8 +120,10 @@ Example response:
 }
 ```
 
-You can also upload a different CSV log (same column format as the AI4I
-dataset) by adding `-F "file=@my_log.csv"` to the request.
+You can also upload a different log file (same columns as the AI4I dataset,
+original or cleaned names) by adding `-F "file=@my_log.xlsx"` to the
+request. Supported formats: `.csv`, `.tsv`, `.xlsx`, `.xls`, `.json`,
+`.parquet`.
 
 ## Project structure
 
