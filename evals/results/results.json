@@ -114,6 +114,44 @@
     "error": false
   },
   {
+    "id": "tool_predict_failure_probability",
+    "category": "tool_selection",
+    "question": "Hava sıcaklığı 303.5 K, proses sıcaklığı 313 K, dönüş hızı 1200 rpm, tork 68 Nm ve takım aşınması 220 dakika olan bir makinenin arıza riski nedir?",
+    "status": "infra_error",
+    "notes": [
+      "Network error while contacting the Gemini API: [SSL: INVALID_SESSION_ID] invalid session id (_ssl.c:992)"
+    ],
+    "tool_calls": [],
+    "answer": "Network error while contacting the Gemini API: [SSL: INVALID_SESSION_ID] invalid session id (_ssl.c:992)",
+    "usage": {
+      "prompt_tokens": 0,
+      "candidates_tokens": 0,
+      "total_tokens": 0,
+      "requests": 0
+    },
+    "elapsed_s": 59.45,
+    "error": true
+  },
+  {
+    "id": "tool_get_failure_prediction_performance",
+    "category": "tool_selection",
+    "question": "Arıza tahmin modelin ne kadar güvenilir, doğruluğu nedir?",
+    "status": "infra_error",
+    "notes": [
+      "Network error while contacting the Gemini API: [SSL: INVALID_SESSION_ID] invalid session id (_ssl.c:992)"
+    ],
+    "tool_calls": [],
+    "answer": "Network error while contacting the Gemini API: [SSL: INVALID_SESSION_ID] invalid session id (_ssl.c:992)",
+    "usage": {
+      "prompt_tokens": 0,
+      "candidates_tokens": 0,
+      "total_tokens": 0,
+      "requests": 0
+    },
+    "elapsed_s": 89.66,
+    "error": true
+  },
+  {
     "id": "chain_compare_two_columns",
     "category": "multi_tool",
     "question": "Torque ve tool wear kolonlarını karşılaştır, hangisinde daha fazla anormallik var?",
@@ -192,17 +230,17 @@
     "question": "Torque'da çok hassas bir anomali taraması yap, 1 standart sapma eşiğiyle.",
     "status": "infra_error",
     "notes": [
-      "API error (429): You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor"
+      "Network error while contacting the Gemini API: [SSL: INVALID_SESSION_ID] invalid session id (_ssl.c:992)"
     ],
     "tool_calls": [],
-    "answer": "API error (429): You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.5-flash\nPlease retry in 3.004196142s.",
+    "answer": "Network error while contacting the Gemini API: [SSL: INVALID_SESSION_ID] invalid session id (_ssl.c:992)",
     "usage": {
       "prompt_tokens": 0,
       "candidates_tokens": 0,
       "total_tokens": 0,
       "requests": 0
     },
-    "elapsed_s": 36.56,
+    "elapsed_s": 54.31,
     "error": true
   },
   {
@@ -281,20 +319,20 @@
     "id": "grounding_list_columns",
     "category": "grounding",
     "question": "Bana veri setindeki tüm kolonları ve ne anlama geldiklerini gösterir misin?",
-    "status": "fail",
+    "status": "infra_error",
     "notes": [
-      "no tool was called, but the answer contains number-like tokens: ['1. ', '10.000 ', '60', '30', '10', '2. ', '3. '] (possible ungrounded/memorized stat)"
+      "Network error while contacting the Gemini API: [SSL: INVALID_SESSION_ID] invalid session id (_ssl.c:992)"
     ],
     "tool_calls": [],
-    "answer": "Yapay zeka ve endüstriyel kestirimci bakım çalışmalarında sıklıkla kullanılan AI4I 2020 Predictive Maintenance (Öngörücü Bakım) veri setinde yer alan temel kolonlar ve bunların anlamları şu şekildedir:\n\n### 1. Kimlik ve Ürün Özellikleri\n*   **UDI:** Her bir kayıt için 1 ile 10.000 arasında değişen benzersiz bir satır numarası/kimlik bilgisidir.\n*   **Product ID (Ürün Kimliği):** Ürünün kalite sınıfına göre belirlenen bir harf (L, M veya H) ve ardından gelen bir seri numarasından oluşur.\n*   **Type (Tip/Kalite Sınıfı):** Ürünün kalite varyantını gösterir:\n    *   **L (Low - Düşük):** Düşük kaliteli ürün (veri setinin yaklaşık %60'ını oluşturur).\n    *   **M (Medium - Orta):** Orta kaliteli ürün (yaklaşık %30).\n    *   **H (High - Yüksek):** Yüksek kaliteli ürün (yaklaşık %10).\n\n### 2. Sensör Ölçümleri (Sayısal Kolonlar)\n*   **Air temperature [K] (`air_temperature_k`):** Kelvin cinsinden hava sıcaklığıdır. Makinenin çalıştığı ortamın sıcaklığını gösterir.\n*   **Process temperature [K] (`process_temperature_k`):** Kelvin cinsinden işlem (proses) sıcaklığıdır. Çalışma anında makinenin içindeki sıcaklığı gösterir.\n*   **Rotational speed [rpm] (`rotational_speed_rpm`):** Dakikadaki devir sayısı (RPM) cinsinden milin dönüş hızıdır.\n*   **Torque [Nm] (`torque_nm`):** Newton-metre (Nm) cinsinden tork değeridir. Milin uyguladığı dönme kuvvetini gösterir.\n*   **Tool wear [min] (`tool_wear_min`):** Dakika cinsinden takım aşınma süresidir. İşlem sırasında kullanılan kesici takımın ne kadar süredir aşındığını gösterir.\n\n### 3. Hedef ve Hata Etiketleri\n*   **Machine failure (Makine Arızası):** Makinenin o anki durumda arıza yapıp yapmadığını gösteren ikili (binary: 0 veya 1) hedef değişkendir. (1 = Arıza var, 0 = Arıza yok).\n*   **Arıza Türleri (Failure Modes):** Eğer bir makine arızası gerçekleşmişse, bunun hangi nedenden kaynaklandığını gösteren alt kırılımlardır:\n    *   **TWF (Tool Wear Failure - Takım Aşınması Arızası):** Takım aşınma süresi sınırları aştığında meydana gelen arıza.\n    *   **HDF (Heat Dissipation Failure - Isı Dağılımı Arızası):** Hava sıcaklığı ile proses sıcaklığı arasındaki fark yetersiz olduğunda ve devir hızı çok düşük olduğunda ısı transferi yetersizliğinden kaynaklanan arıza.\n    *   **PWF (Power Failure - Güç Arızası):** Tork ve devir hızının çarpımı olan gücün, makine limitlerinin dışına çıkması (çok düşük veya çok yüksek olması) nedeniyle oluşan arıza.\n    *   **OSF (Overstrain Failure - Aşırı Zorlanma Arızası):** Takım aşınması ve tork çarpımının (aşınma geriliminin) makine kapasitesini aşmasıyla oluşan arıza.\n    *   **RNF (Random Failures - Rastgele Arızalar):** Belirli bir nedene bağlı olmayan, rastgele meydana gelen arıza türü.\n\nVeri setindeki sayısal değerlerin özet istatistiklerini almak, arıza durumlarını analiz etmek veya değişkenler arasındaki ilişkileri incelemek isterseniz ilgili analiz araçlarını kullanarak detaylı bilgi sağlayabilirim.",
+    "answer": "Network error while contacting the Gemini API: [SSL: INVALID_SESSION_ID] invalid session id (_ssl.c:992)",
     "usage": {
-      "prompt_tokens": 1148,
-      "candidates_tokens": 878,
-      "total_tokens": 2715,
-      "requests": 1
+      "prompt_tokens": 0,
+      "candidates_tokens": 0,
+      "total_tokens": 0,
+      "requests": 0
     },
-    "elapsed_s": 7.88,
-    "error": false
+    "elapsed_s": 77.3,
+    "error": true
   },
   {
     "id": "grounding_what_is_twf",
@@ -336,17 +374,17 @@
     "question": "Bir sonraki arızanın ne zaman olacağını tahmin eder misin?",
     "status": "infra_error",
     "notes": [
-      "API error (429): You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor"
+      "Network error while contacting the Gemini API: [SSL: INVALID_SESSION_ID] invalid session id (_ssl.c:992)"
     ],
     "tool_calls": [],
-    "answer": "API error (429): You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.5-flash\nPlease retry in 26.806599877s.",
+    "answer": "Network error while contacting the Gemini API: [SSL: INVALID_SESSION_ID] invalid session id (_ssl.c:992)",
     "usage": {
       "prompt_tokens": 0,
       "candidates_tokens": 0,
       "total_tokens": 0,
       "requests": 0
     },
-    "elapsed_s": 36.2,
+    "elapsed_s": 82.73,
     "error": true
   },
   {
@@ -382,7 +420,7 @@
       "total_tokens": 0,
       "requests": 0
     },
-    "elapsed_s": 61.03,
+    "elapsed_s": 47.97,
     "error": true
   }
 ]
