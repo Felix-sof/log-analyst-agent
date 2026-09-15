@@ -15,10 +15,10 @@ to you in plain language.
    - `detect_anomalies(column, threshold)` - z-score based anomaly detection
    - `plot_trend(column)` - saves a trend chart (PNG) for a sensor column
    - `get_failure_summary()` - failure counts by failure mode and product type
-3. **`agent.py`** runs the agentic tool-use loop against the Claude API:
-   Claude decides which tool(s) to call, the tools execute against the
-   DataFrame, results are fed back to Claude, and it produces a final
-   natural-language answer.
+3. **`agent.py`** runs the agentic tool-use loop against the Google Gemini API
+   (free tier): Gemini decides which tool(s) to call, the tools execute
+   against the DataFrame, results are fed back to Gemini, and it produces a
+   final natural-language answer.
 4. **`api.py`** exposes the agent over HTTP via FastAPI.
 
 ## Dataset
@@ -37,13 +37,18 @@ this repository.
 
 ## Setup
 
+1. Get a **free** Gemini API key at [Google AI Studio](https://aistudio.google.com/apikey)
+   (no credit card required). The free tier currently gives 1,500 requests/day
+   on Flash models - more than enough for this project.
+2. Install dependencies and configure the key:
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 cp .env.example .env
-# edit .env and set ANTHROPIC_API_KEY
+# edit .env and set GEMINI_API_KEY
 ```
 
 The API key is read from `.env` via `python-dotenv` at runtime - it is never
@@ -89,7 +94,7 @@ Example response:
 {
   "question": "Are there any anomalies in the torque readings?",
   "dataset_source": "default",
-  "model": "claude-sonnet-4-6",
+  "model": "gemini-3.8-flash",
   "answer": "I checked torque_nm for outliers beyond 3 standard deviations...",
   "tool_calls": [
     {
@@ -111,7 +116,7 @@ dataset) by adding `-F "file=@my_log.csv"` to the request.
 log-analyst-agent/
 ├── data_loader.py     # download + clean the dataset
 ├── tools.py            # tool functions + JSON schemas for the agent
-├── agent.py             # Claude tool-use agentic loop
+├── agent.py             # Gemini tool-use agentic loop
 ├── api.py                 # FastAPI /analyze endpoint
 ├── requirements.txt
 ├── .env.example

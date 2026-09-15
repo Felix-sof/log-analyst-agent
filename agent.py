@@ -1,21 +1,20 @@
 """
-Log Analyst Agent: a Claude-powered agent that answers natural-language
+Log Analyst Agent: a Gemini-powered agent that answers natural-language
 questions about the AI4I 2020 predictive maintenance sensor log by calling
 tool functions defined in tools.py (tool use / function calling).
 """
 
-import json
 import os
 
-import anthropic
 from dotenv import load_dotenv
+from google import genai
+from google.genai import errors, types
 
 from tools import TOOL_DISPATCH, TOOL_SCHEMAS
 
 load_dotenv()
 
-MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-6")
-MAX_TOKENS = 4096
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 MAX_TOOL_ITERATIONS = 8
 
 SYSTEM_PROMPT = """You are a Log Analyst Agent for an industrial predictive-maintenance
@@ -30,75 +29,73 @@ generate a plot, mention the file path where it was saved.
 """
 
 
-def _execute_tool(name: str, tool_input: dict) -> str:
-    """Run a tool function by name and serialize its result for the API."""
+def _build_tool() -> types.Tool:
+    """Convert TOOL_SCHEMAS (name/description/input_schema) into a Gemini Tool."""
+    declarations = [
+        types.FunctionDeclaration(
+            name=schema["name"],
+            description=schema["description"],
+            parameters_json_schema=schema["input_schema"],
+        )
+        for schema in TOOL_SCHEMAS
+    ]
+    return types.Tool(function_declarations=declarations)
+
+
+def _execute_tool(name: str, tool_args: dict) -> dict:
+    """Run a tool function by name and return its (JSON-serializable) result."""
     if name not in TOOL_DISPATCH:
-        return json.dumps({"error": f"Unknown tool '{name}'"})
+        return {"error": f"Unknown tool '{name}'"}
     try:
-        result = TOOL_DISPATCH[name](**tool_input)
-        return json.dumps(result)
+        return TOOL_DISPATCH[name](**tool_args)
     except Exception as exc:  # noqa: BLE001 - surface any tool failure to the model
-        return json.dumps({"error": str(exc)})
+        return {"error": str(exc)}
 
 
-def run_agent(question: str, client: anthropic.Anthropic = None) -> dict:
+def run_agent(question: str, client: genai.Client = None) -> dict:
     """Run the agentic tool-use loop for a single user question.
 
     Returns a dict with the final natural-language answer and a trace of the
     tool calls the agent made along the way.
     """
-    client = client or anthropic.Anthropic()
-    messages = [{"role": "user", "content": question}]
+    client = client or genai.Client()
+    config = types.GenerateContentConfig(
+        system_instruction=SYSTEM_PROMPT,
+        tools=[_build_tool()],
+    )
+    contents = [types.Content(role="user", parts=[types.Part.from_text(text=question)])]
     tool_call_trace = []
 
     for _ in range(MAX_TOOL_ITERATIONS):
         try:
-            response = client.messages.create(
+            response = client.models.generate_content(
                 model=MODEL,
-                max_tokens=MAX_TOKENS,
-                system=SYSTEM_PROMPT,
-                tools=TOOL_SCHEMAS,
-                messages=messages,
+                contents=contents,
+                config=config,
             )
-        except anthropic.APIStatusError as exc:
+        except errors.APIError as exc:
             return {
-                "answer": f"API error: {exc.message}",
-                "tool_calls": tool_call_trace,
-                "error": True,
-            }
-        except anthropic.APIConnectionError:
-            return {
-                "answer": "Network error while contacting the Claude API.",
+                "answer": f"API error ({exc.code}): {exc.message}",
                 "tool_calls": tool_call_trace,
                 "error": True,
             }
 
-        if response.stop_reason != "tool_use":
-            answer = next(
-                (block.text for block in response.content if block.type == "text"),
-                "",
-            )
-            return {"answer": answer, "tool_calls": tool_call_trace, "error": False}
+        function_calls = response.function_calls or []
+        if not function_calls:
+            return {"answer": response.text or "", "tool_calls": tool_call_trace, "error": False}
 
-        messages.append({"role": "assistant", "content": response.content})
+        contents.append(response.candidates[0].content)
 
-        tool_results = []
-        for block in response.content:
-            if block.type != "tool_use":
-                continue
-            result_json = _execute_tool(block.name, block.input)
-            tool_call_trace.append(
-                {"name": block.name, "input": block.input, "result": json.loads(result_json)}
-            )
-            tool_results.append(
-                {
-                    "type": "tool_result",
-                    "tool_use_id": block.id,
-                    "content": result_json,
-                }
+        response_parts = []
+        for call in function_calls:
+            call_args = dict(call.args or {})
+            result = _execute_tool(call.name, call_args)
+            tool_call_trace.append({"name": call.name, "input": call_args, "result": result})
+            response_parts.append(
+                types.Part.from_function_response(name=call.name, response={"result": result})
             )
 
-        messages.append({"role": "user", "content": tool_results})
+        contents.append(types.Content(role="tool", parts=response_parts))
 
     return {
         "answer": "Stopped after too many tool-use iterations without a final answer.",
