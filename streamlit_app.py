@@ -37,6 +37,9 @@ with st.sidebar:
             tmp_path = Path(tmp.name)
         try:
             tools._df = load_uploaded_file(tmp_path, uploaded_file.name)
+            # a new dataset invalidates any tool results the agent remembers from before
+            st.session_state.gemini_history = None
+            st.session_state.display_history = []
             st.success(f"'{uploaded_file.name}' yüklendi ve kullanılıyor.")
         except Exception as exc:  # noqa: BLE001
             st.error(f"Dosya okunamadı: {exc}")
@@ -52,12 +55,19 @@ with st.sidebar:
     st.divider()
     st.caption(f"Model: `{agent.MODEL}`")
 
-if "history" not in st.session_state:
-    st.session_state.history = []
+    if st.button("🗑️ Konuşmayı temizle"):
+        st.session_state.display_history = []
+        st.session_state.gemini_history = None
+        st.rerun()
+
+if "display_history" not in st.session_state:
+    st.session_state.display_history = []
+if "gemini_history" not in st.session_state:
+    st.session_state.gemini_history = None  # raw multi-turn context for agent.run_agent
 
 question = st.chat_input("Örn: Tool wear kolonunda anormallik var mı?")
 
-for turn in st.session_state.history:
+for turn in st.session_state.display_history:
     with st.chat_message("user"):
         st.markdown(turn["question"])
     with st.chat_message("assistant"):
@@ -76,7 +86,7 @@ if question:
 
     with st.chat_message("assistant"):
         with st.spinner("Analiz ediliyor..."):
-            result = agent.run_agent(question)
+            result = agent.run_agent(question, history=st.session_state.gemini_history)
 
         st.markdown(result["answer"])
         for call in result["tool_calls"]:
@@ -87,6 +97,7 @@ if question:
         with st.expander("Tool çağrıları (detay)"):
             st.json(result["tool_calls"])
 
-    st.session_state.history.append(
+    st.session_state.gemini_history = result["history"]
+    st.session_state.display_history.append(
         {"question": question, "answer": result["answer"], "tool_calls": result["tool_calls"]}
     )
