@@ -7,7 +7,7 @@ backing them)?
 ## Run it
 
 ```bash
-python -m evals.run_eval                # run all 20 cases
+python -m evals.run_eval                # run all 22 cases
 python -m evals.run_eval --retry-infra   # re-run only cases that hit an
                                           # API/network error last time,
                                           # merging into the existing results
@@ -36,3 +36,18 @@ strengthened with a concrete negative example matching this exact pattern,
 but a live re-run to confirm the fix hit the same exhausted quota before it
 could complete - **re-run this case (or the full grounding category) once
 the quota resets, and update this note with the result.**
+
+## Failure-risk prediction tools (added 2026-09-15)
+
+Two cases (`tool_predict_failure_probability`, `tool_get_failure_prediction_performance`)
+cover the new `predict_failure_probability` / `get_failure_prediction_performance`
+tools (a `RandomForestClassifier` trained on the loaded dataset - see `tools.py`).
+Same quota exhaustion blocked a full graded run, but a manual live call
+confirmed the important part: given "Hava sıcaklığı 303.5 K, proses sıcaklığı
+313 K, dönüş hızı 1200 rpm, tork 68 Nm ve takım aşınması 220 dakika olan bir
+makinenin arıza riski nedir?", the agent correctly parsed all five parameters
+and called `predict_failure_probability` with the right arguments, returning
+89.15% failure probability (matching a direct, non-agent call to the same
+function). Only the follow-up "summarize this in natural language" request
+hit the infra error, not the tool selection itself - **run the full eval once
+the quota resets to get a graded result for these two cases.**

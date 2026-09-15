@@ -65,6 +65,22 @@ CASES = [
         "question": "Genel arıza özetini ver.",
         "must_call": ["get_failure_summary"],
     },
+    {
+        "id": "tool_predict_failure_probability",
+        "category": "tool_selection",
+        "question": (
+            "Hava sıcaklığı 303.5 K, proses sıcaklığı 313 K, dönüş hızı 1200 rpm, "
+            "tork 68 Nm ve takım aşınması 220 dakika olan bir makinenin arıza "
+            "riski nedir?"
+        ),
+        "must_call": ["predict_failure_probability"],
+    },
+    {
+        "id": "tool_get_failure_prediction_performance",
+        "category": "tool_selection",
+        "question": "Arıza tahmin modelin ne kadar güvenilir, doğruluğu nedir?",
+        "must_call": ["get_failure_prediction_performance"],
+    },
     # --- multi-tool chaining ---
     {
         "id": "chain_compare_two_columns",

@@ -35,8 +35,17 @@ def sample_df() -> pd.DataFrame:
 
 @pytest.fixture(autouse=True)
 def patched_dataset(monkeypatch, sample_df):
-    """Point tools.py at the synthetic sample_df for every test in this suite."""
+    """Point tools.py at the synthetic sample_df for every test in this suite.
+
+    Also clears the cached failure-prediction model: it's keyed by id(_df),
+    and Python can reuse a freed DataFrame's memory address for a *different*
+    object in the next test, which would make the id() check wrongly treat a
+    stale model as still valid.
+    """
     import tools
 
     monkeypatch.setattr(tools, "_df", sample_df)
+    monkeypatch.setattr(tools, "_model", None)
+    monkeypatch.setattr(tools, "_model_metrics", None)
+    monkeypatch.setattr(tools, "_model_trained_on", None)
     yield

@@ -10,9 +10,13 @@ function calling). TOOL_DISPATCH maps tool names to their implementations.
 from pathlib import Path
 
 import matplotlib
+import pandas as pd
 
 matplotlib.use("Agg")  # headless rendering, no display needed
 import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.model_selection import train_test_split
 
 from data_loader import load_data
 
@@ -35,6 +39,9 @@ FAILURE_MODE_COLUMNS = {
 }
 
 _df = None
+_model = None
+_model_metrics = None
+_model_trained_on = None  # id() of the DataFrame the cached model was trained on
 
 
 def _get_df():
@@ -43,6 +50,54 @@ def _get_df():
     if _df is None:
         _df = load_data()
     return _df
+
+
+def _get_model():
+    """Lazily train (and cache) a failure-risk classifier on the current dataset.
+
+    Retrains automatically if the dataset has changed (e.g. a new file was
+    uploaded, which replaces the _df object) - detected via id(), since a
+    cached model trained on the previous dataset would silently mispredict.
+    """
+    global _model, _model_metrics, _model_trained_on
+    df = _get_df()
+
+    if _model is not None and _model_trained_on == id(df):
+        return _model, _model_metrics
+
+    X = df[NUMERIC_COLUMNS]
+    y = df["machine_failure"]
+
+    try:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42, stratify=y
+        )
+    except ValueError:
+        # too few examples of one class to stratify - fall back to a plain split
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
+        )
+
+    clf = RandomForestClassifier(
+        n_estimators=200, max_depth=8, class_weight="balanced", random_state=42
+    )
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+
+    metrics = {
+        "train_size": len(X_train),
+        "test_size": len(X_test),
+        "test_failure_rate_pct": round(float(y_test.mean() * 100), 3),
+        "accuracy": round(float(accuracy_score(y_test, y_pred)), 4),
+        "precision": round(float(precision_score(y_test, y_pred, zero_division=0)), 4),
+        "recall": round(float(recall_score(y_test, y_pred, zero_division=0)), 4),
+        "f1": round(float(f1_score(y_test, y_pred, zero_division=0)), 4),
+    }
+
+    _model = clf
+    _model_metrics = metrics
+    _model_trained_on = id(df)
+    return _model, _model_metrics
 
 
 def _validate_numeric_column(column: str) -> None:
@@ -217,6 +272,78 @@ def compare_by_failure(column: str) -> dict:
     }
 
 
+def get_failure_prediction_performance() -> dict:
+    """Train (if needed) a failure-risk classifier and report its test-set performance.
+
+    Uses a RandomForestClassifier on the five numeric sensor columns to
+    predict machine_failure, with an 80/20 stratified train/test split.
+    """
+    _, metrics = _get_model()
+    return {
+        "model": "RandomForestClassifier (scikit-learn, 200 trees, class_weight=balanced)",
+        "features_used": NUMERIC_COLUMNS,
+        **metrics,
+        "note": (
+            "Evaluated on a held-out 20% test split from the currently loaded "
+            "dataset. Failures are rare (a few percent of records), so "
+            "precision/recall for the 'failure' class matter more than raw "
+            "accuracy - a model that always predicts 'no failure' would still "
+            "score a high accuracy while being useless."
+        ),
+    }
+
+
+def predict_failure_probability(
+    air_temperature_k: float,
+    process_temperature_k: float,
+    rotational_speed_rpm: float,
+    torque_nm: float,
+    tool_wear_min: float,
+) -> dict:
+    """Predict the probability of machine failure for a hypothetical sensor reading.
+
+    This estimates risk for a specific combination of sensor values using a
+    classifier trained on the currently loaded dataset - it does NOT forecast
+    *when* a failure will occur (the dataset has no time dimension, only
+    independent snapshots), and is not reliable for inputs far outside the
+    training data's range.
+
+    Args:
+        air_temperature_k: Air temperature in Kelvin.
+        process_temperature_k: Process temperature in Kelvin.
+        rotational_speed_rpm: Rotational speed in rpm.
+        torque_nm: Torque in Nm.
+        tool_wear_min: Tool wear in minutes.
+    """
+    model, _ = _get_model()
+    row = pd.DataFrame(
+        [[air_temperature_k, process_temperature_k, rotational_speed_rpm, torque_nm, tool_wear_min]],
+        columns=NUMERIC_COLUMNS,
+    )
+
+    classes = list(model.classes_)
+    if 1 not in classes:
+        failure_probability = 0.0  # model never saw a failure example to learn from
+    else:
+        failure_probability = float(model.predict_proba(row)[0][classes.index(1)])
+
+    return {
+        "input": {
+            "air_temperature_k": air_temperature_k,
+            "process_temperature_k": process_temperature_k,
+            "rotational_speed_rpm": rotational_speed_rpm,
+            "torque_nm": torque_nm,
+            "tool_wear_min": tool_wear_min,
+        },
+        "failure_probability_pct": round(failure_probability * 100, 2),
+        "predicted_label": "failure" if failure_probability >= 0.5 else "normal",
+        "note": (
+            "Risk estimate for this specific reading, not a time-to-failure "
+            "forecast - the dataset has no timestamps to forecast from."
+        ),
+    }
+
+
 def get_failure_summary() -> dict:
     """Return a summary of machine failures broken down by failure type and product type."""
     df = _get_df()
@@ -366,6 +493,46 @@ TOOL_SCHEMAS = [
             "required": [],
         },
     },
+    {
+        "name": "get_failure_prediction_performance",
+        "description": (
+            "Train (if not already cached) a failure-risk classifier on the current "
+            "dataset and report its test-set accuracy, precision, recall, and F1 for "
+            "the failure class. Use this when asked how well failures can be "
+            "predicted, or how reliable a risk prediction would be."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+    },
+    {
+        "name": "predict_failure_probability",
+        "description": (
+            "Predict the failure probability for a hypothetical sensor reading "
+            "(specific values, not from the dataset). Does NOT forecast when a "
+            "failure will happen - the dataset has no time dimension - only the "
+            "risk associated with a given combination of readings."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "air_temperature_k": {"type": "number", "description": "Air temperature in Kelvin."},
+                "process_temperature_k": {"type": "number", "description": "Process temperature in Kelvin."},
+                "rotational_speed_rpm": {"type": "number", "description": "Rotational speed in rpm."},
+                "torque_nm": {"type": "number", "description": "Torque in Nm."},
+                "tool_wear_min": {"type": "number", "description": "Tool wear in minutes."},
+            },
+            "required": [
+                "air_temperature_k",
+                "process_temperature_k",
+                "rotational_speed_rpm",
+                "torque_nm",
+                "tool_wear_min",
+            ],
+        },
+    },
 ]
 
 TOOL_DISPATCH = {
@@ -375,4 +542,6 @@ TOOL_DISPATCH = {
     "get_correlation": get_correlation,
     "compare_by_failure": compare_by_failure,
     "get_failure_summary": get_failure_summary,
+    "get_failure_prediction_performance": get_failure_prediction_performance,
+    "predict_failure_probability": predict_failure_probability,
 }

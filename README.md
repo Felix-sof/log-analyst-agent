@@ -17,6 +17,12 @@ to you in plain language.
    - `get_correlation(column_a, column_b)` - Pearson correlation between two columns
    - `compare_by_failure(column)` - compares a column's mean/std on failed vs. normal records
    - `get_failure_summary()` - failure counts by failure mode and product type
+   - `get_failure_prediction_performance()` - trains (and caches) a
+     RandomForestClassifier predicting machine failure from the sensor
+     columns, reports accuracy/precision/recall/F1 on a held-out test split
+   - `predict_failure_probability(...)` - failure-risk estimate for a
+     hypothetical sensor reading using that trained model (not a
+     time-to-failure forecast - the dataset has no time dimension)
 3. **`agent.py`** runs the agentic tool-use loop against the Google Gemini API
    (free tier): Gemini decides which tool(s) to call, the tools execute
    against the DataFrame, results are fed back to Gemini, and it produces a

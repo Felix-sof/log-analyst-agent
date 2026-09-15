@@ -3,6 +3,7 @@ certifi
 pandas>=3.0.5
 requests>=2.34.2
 matplotlib>=3.11.2
+scikit-learn>=1.9.1
 python-dotenv>=1.2.3
 fastapi>=0.141.1
 uvicorn[standard]>=0.53.0

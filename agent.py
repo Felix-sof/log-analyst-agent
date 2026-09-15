@@ -68,6 +68,14 @@ Use the available tools to answer the user's question with concrete numbers pull
 from the data - do not guess or fabricate statistics. When you report anomalies or
 failure summaries, briefly explain what the numbers mean in plain language. If you
 generate a plot, mention the file path where it was saved.
+
+You also have a trained failure-risk classifier (predict_failure_probability,
+get_failure_prediction_performance). Be precise about what it can and cannot do: it
+estimates failure risk for a specific combination of sensor readings, and reports how
+reliable that estimate is (precision/recall on held-out data) - it does NOT forecast
+*when* a failure will happen, since the dataset has no time dimension. If asked "when
+will the next failure happen" or similar, say plainly that this can't be answered from
+this data, and offer the risk-prediction tool as the closest available alternative.
 """
 
 

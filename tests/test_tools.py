@@ -108,6 +108,37 @@ class TestPlotTrend:
             tools.plot_trend("humidity")
 
 
+class TestFailurePrediction:
+    def test_performance_report_shape(self):
+        result = tools.get_failure_prediction_performance()
+        assert result["train_size"] + result["test_size"] == 10
+        for key in ("accuracy", "precision", "recall", "f1"):
+            assert 0.0 <= result[key] <= 1.0
+
+    def test_predict_returns_a_probability_and_label(self):
+        result = tools.predict_failure_probability(
+            air_temperature_k=298.0,
+            process_temperature_k=308.0,
+            rotational_speed_rpm=1500.0,
+            torque_nm=40.0,
+            tool_wear_min=50.0,
+        )
+        assert 0.0 <= result["failure_probability_pct"] <= 100.0
+        assert result["predicted_label"] in ("failure", "normal")
+        assert result["input"]["torque_nm"] == 40.0
+
+    def test_model_retrains_when_dataset_changes(self, sample_df, monkeypatch):
+        tools.get_failure_prediction_performance()  # trains and caches on sample_df
+        trained_on_first = tools._model_trained_on
+
+        new_df = sample_df.copy()
+        monkeypatch.setattr(tools, "_df", new_df)
+        tools.get_failure_prediction_performance()
+
+        assert tools._model_trained_on != trained_on_first
+        assert tools._model_trained_on == id(new_df)
+
+
 class TestToolRegistry:
     def test_every_schema_has_a_dispatch_entry(self):
         schema_names = {schema["name"] for schema in tools.TOOL_SCHEMAS}
@@ -118,10 +149,18 @@ class TestToolRegistry:
         import json
 
         for name, func in tools.TOOL_DISPATCH.items():
-            if name == "get_failure_summary":
+            if name in ("get_failure_summary", "get_failure_prediction_performance"):
                 result = func()
             elif name == "get_correlation":
                 result = func("air_temperature_k", "process_temperature_k")
+            elif name == "predict_failure_probability":
+                result = func(
+                    air_temperature_k=298.0,
+                    process_temperature_k=308.0,
+                    rotational_speed_rpm=1500.0,
+                    torque_nm=40.0,
+                    tool_wear_min=50.0,
+                )
             else:
                 result = func("torque_nm")
             json.dumps(result)  # raises if anything (e.g. a numpy type) isn't serializable
